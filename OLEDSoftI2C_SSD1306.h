@@ -1,3 +1,6 @@
+// Low resource OLED SSD1306 library
+// 2016-2018 by Pawel A. Hernik 
+
 #ifndef OLEDSoftI2C_SSD1306_H
 #define OLEDSoftI2C_SSD1306_H 
 
