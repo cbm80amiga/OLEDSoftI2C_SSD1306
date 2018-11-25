@@ -344,9 +344,11 @@ void OLEDSoftI2C_SSD1306::setFont(const uint8_t* f)
   ySize    = pgm_read_byte(font+1);
   firstCh  = pgm_read_byte(font+2);
   lastCh   = pgm_read_byte(font+3);
-  ySize8 = (ySize+7)/8;
+  ySize8   = (ySize+7)/8;
   minCharWd  = 0;
   minDigitWd = 0;
+  cr = 0;
+  invertCh = 0;
 }
 // ---------------------------------
 int OLEDSoftI2C_SSD1306::printStr(int x, uint8_t y8, char *txt)
@@ -437,16 +439,28 @@ uint8_t OLEDSoftI2C_SSD1306::printChar(uint8_t x, uint8_t row, uint8_t _ch)
 #if USEHW==1
   Wire.beginTransmission(i2cAddr);
   Wire.write(CTR_DAT);
-  for(i=0; i<wdL; i++) Wire.write(0);
-  for(i=0; i<wd; i++)  Wire.write(pgm_read_byte(font+idx+i));
-  for(i=0; i<wdR; i++) Wire.write(0);
+  if(!invertCh) {
+    for(i=0; i<wdL; i++) Wire.write(0);
+    for(i=0; i<wd; i++)  Wire.write(pgm_read_byte(font+idx+i));
+    for(i=0; i<wdR; i++) Wire.write(0);
+  } else {
+    for(i=0; i<wdL; i++) Wire.write(0xff);
+    for(i=0; i<wd; i++)  Wire.write(pgm_read_byte(font+idx+i)^0xff);
+    for(i=0; i<wdR; i++) Wire.write(0xff);
+  }
   Wire.endTransmission();
 #else
   i2c_start(i2cAddr<<1 | I2C_WRITE);
   i2c_write(CTR_DAT);
-  for(i=0; i<wdL; i++) i2c_write(0);
-  for(i=0; i<wd; i++)  i2c_write(pgm_read_byte(font+idx+i));
-  for(i=0; i<wdR; i++) i2c_write(0);
+  if(!invertCh) {
+    for(i=0; i<wdL; i++) i2c_write(0);
+    for(i=0; i<wd; i++)  i2c_write(pgm_read_byte(font+idx+i));
+    for(i=0; i<wdR; i++) i2c_write(0);
+  } else {
+    for(i=0; i<wdL; i++) i2c_write(0xff);
+    for(i=0; i<wd; i++)  i2c_write(pgm_read_byte(font+idx+i)^0xff);
+    for(i=0; i<wdR; i++) i2c_write(0xff);
+  }
   i2c_stop();
 #endif
   return (wd+wdL+wdR)/ySize8;
